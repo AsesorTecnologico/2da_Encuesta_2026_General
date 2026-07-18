@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Dashboard 1er Encuesta Calificada de Docente</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif; }
+        body { background: #eef5fc; padding: 20px 24px 40px; }
+        .dashboard { max-width: 1800px; margin: 0 auto; }
+        .header { margin-bottom: 28px; }
+        .header h1 { font-size: 2rem; font-weight: 700; background: linear-gradient(135deg, #003459, #1e6f5c); -webkit-background-clip: text; background-clip: text; color: transparent; display: inline-flex; align-items: center; gap: 12px; }
+        .header h1 i { background: linear-gradient(145deg, #1f6e8c, #0a495e); color: white; padding: 14px; border-radius: 40px; box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
+        .sub { color: #2c6777; margin-top: 8px; border-left: 5px solid #2c9f8c; padding-left: 20px; font-weight: 500; }
+        .stats-bar { background: white; border-radius: 28px; padding: 12px 24px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .filtros-avanzados { background: white; border-radius: 36px; padding: 20px 28px; margin-bottom: 28px; box-shadow: 0 12px 22px -12px rgba(0, 52, 89, 0.12); border: 1px solid #c9e0f0; }
+        .filtros-grid { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+        .filtro-group { flex: 1 1 130px; min-width: 110px; }
+        .filtro-group label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: #1f6e8c; letter-spacing: 0.5px; display: block; margin-bottom: 4px; }
+        .filtro-group select { width: 100%; padding: 8px 10px; border-radius: 50px; border: 1.5px solid #cde1ef; background: #fefefe; font-weight: 500; font-size: 0.8rem; cursor: pointer; }
+        .filtro-group select:focus { outline: none; border-color: #2c9f8c; }
+        .filtro-pregunta { background: #f0f6fb; border-radius: 20px; padding: 8px 12px; margin: 5px 0; }
+        .filtro-pregunta label { font-size: 0.65rem; font-weight: 700; color: #165a72; display: block; margin-bottom: 4px; }
+        .filtro-pregunta .pregunta-texto { font-size: 0.6rem; color: #2c6777; margin-bottom: 6px; line-height: 1.2; }
+        .btn-reset, .btn-orden { background: #e5f0f9; border: none; padding: 8px 16px; border-radius: 60px; font-weight: 600; color: #1e5f73; cursor: pointer; transition: 0.2s; font-size: 0.8rem; }
+        .btn-reset:hover, .btn-orden:hover { background: #cae3f2; }
+        .orden-group { display: flex; gap: 8px; align-items: center; background: #f0f6fb; padding: 5px 12px; border-radius: 60px; }
+        .btn-orden.activo { background: #2c9f8c; color: white; }
+        .kpi-mini { background: white; border-radius: 32px; padding: 16px 28px; box-shadow: 0 5px 12px rgba(0,0,0,0.05); display: flex; gap: 32px; flex-wrap: wrap; margin-bottom: 30px; }
+        .kpi-mini-item { display: flex; align-items: baseline; gap: 12px; background: #f7fbfe; padding: 8px 18px; border-radius: 100px; }
+        .kpi-mini-item span:first-child { font-weight: 600; color: #165a72; }
+        .kpi-mini-item span:last-child { font-size: 1.7rem; font-weight: 800; color: #003459; }
+        .charts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 40px; }
+        .chart-card { background: white; border-radius: 32px; padding: 18px; box-shadow: 0 10px 20px -10px rgba(0,0,0,0.08); }
+        .chart-title { font-weight: 700; font-size: 1rem; margin-bottom: 15px; color: #1f5e6e; display: flex; align-items: center; gap: 8px; }
+        .chart-container { height: 250px; position: relative; }
+        .tabla-detallada { background: white; border-radius: 32px; padding: 20px; overflow-x: auto; box-shadow: 0 15px 28px -16px #133f4e; margin-top: 20px; }
+        .tabla-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+        .tabla-header h3 { font-size: 1.3rem; display: flex; align-items: center; gap: 10px; color: #023047; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 1400px; }
+        th { background: #ddebf3; padding: 12px 8px; text-align: left; font-weight: 700; color: #01415b; }
+        td { padding: 10px 8px; border-bottom: 1px solid #d1e2ef; }
+        .badge-nivel { display: inline-block; padding: 3px 10px; border-radius: 50px; font-weight: 600; font-size: 0.7rem; }
+        .nivel-inicio { background: #FFB4A2; color: #8B3E2B; }
+        .nivel-proceso { background: #FFD6A5; color: #9E601C; }
+        .nivel-logrado { background: #FDFFB6; color: #7F691F; }
+        .nivel-destacado { background: #CAFFBF; color: #1F6D4C; }
+        .puntaje-badge { display: inline-block; padding: 3px 8px; border-radius: 30px; font-weight: 700; font-size: 0.75rem; background: #e8f2f9; color: #1e6091; text-align: center; min-width: 35px; }
+        .footer-note { margin-top: 30px; text-align: center; color: #4b748b; font-size: 0.75rem; border-top: 1px solid #cfe1ef; padding-top: 20px; }
+        @media (max-width: 1100px) { .charts-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 900px) { .filtros-grid { flex-direction: column; } }
+        .loading-indicator { background: white; border-radius: 40px; padding: 12px 24px; margin-bottom: 20px; text-align: center; color: #1e6091; font-weight: 500; display: none; }
+        .loading-indicator.show { display: block; }
+        .btn-actualizar { background: #34a5a5; color: white; border: none; padding: 8px 20px; border-radius: 40px; font-weight: 600; cursor: pointer; }
+        .filtros-preguntas { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #cde1ef; }
+        .pregunta-filtro { flex: 1; min-width: 180px; background: #f9fbfd; border-radius: 16px; padding: 8px 12px; }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <div class="header">
+        <h1><i class="fas fa-chalkboard-user"></i> Dashboard 1er Encuesta Calificada de Docente</h1>
+        <div class="sub"><i class="fa-regular fa-diagram-project"></i> Filtros asociados: selecciona cualquier valor y los demás filtros se actualizan automáticamente</div>
+    </div>
+
+    <div class="stats-bar">
+        <span><i class="fa-regular fa-cloud-arrow-down"></i> <strong>Fuente:</strong> DIRAGE</span>
+        <button id="btnActualizar" class="btn-actualizar"><i class="fa-solid fa-arrows-rotate"></i> Actualizar datos</button>
+    </div>
+
+    <div class="loading-indicator" id="loadingIndicator">
+        <i class="fa-solid fa-spinner fa-pulse"></i> Cargando datos desde Google Sheets...
+    </div>
+
+    <div class="filtros-avanzados">
+        <div class="filtros-grid">
+            <div class="filtro-group"><label>🧠 Área</label><select id="filtroPsicologo"><option value="__ALL__">Todos</option></select></div>
+            <div class="filtro-group"><label>📚 Plana</label><select id="filtroPlana"><option value="__ALL__">Todas</option></select></div>
+            <div class="filtro-group"><label>👨‍🏫 Docente</label><select id="filtroDocente"><option value="__ALL__">Todos</option></select></div>
+            <div class="filtro-group"><label>🏫 Sede</label><select id="filtroSede"><option value="__ALL__">Todas</option></select></div>
+            <div class="filtro-group"><label>⏰ Turno</label><select id="filtroTurno"><option value="__ALL__">Todos</option></select></div>
+            <div class="filtro-group"><label>🎓 Tipo Grado</label><select id="filtroTipoGrado"><option value="__ALL__">Todos</option></select></div>
+            <div class="filtro-group"><label>📖 Grado</label><select id="filtroGrado"><option value="__ALL__">Todos</option></select></div>
+            <div class="filtro-group"><label>⭐ Nivel logro</label><select id="filtroNivelLogro"><option value="__ALL__">Todos</option><option value="inicio">Inicio (7.0-8.69)</option><option value="proceso">Proceso (8.70-8.99)</option><option value="logrado">Logrado (9.0-9.70)</option><option value="destacado">Destacado (9.71-10)</option></select></div>
+            <div class="filtro-group"><button id="resetFiltrosBtn" class="btn-reset"><i class="fa-regular fa-arrows-rotate"></i> Reiniciar</button></div>
+        </div>
+        
+        
+
+    <div class="kpi-mini" id="kpiResumen"></div>
+
+    <div class="charts-grid">
+        <div class="chart-card">
+            <div class="chart-title"><i class="fa-regular fa-chart-bar"></i> Promedio por Área</div>
+            <div class="chart-container"><canvas id="promedioPsicologoChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-title"><i class="fa-regular fa-chart-pie"></i> Distribución niveles</div>
+            <div class="chart-container"><canvas id="nivelGlobalChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-title"><i class="fa-regular fa-chart-scatter"></i> Dispersión de promedios</div>
+            <div class="chart-container"><canvas id="scatterChart"></canvas></div>
+            <div style="font-size:0.65rem; text-align:center; margin-top:8px;">🔍 Cada punto = un registro evaluado</div>
+        </div>
+    </div>
+
+<ul style="list-style: none; padding-left: 0; margin: 0;">
+    <li style="margin-bottom: 12px; font-weight: 600; color: #374151; display: flex; align-items: flex-start;">
+        <span style="color: #3B82F6; font-size: 18px; margin-right: 10px;">✦</span>
+        P1: Mi profesor(a) mantiene un trato respetuoso, promoviendo la disciplina y un ambiente ordenado que favorece mi atención y participación activa.
+    </li>
+
+    <li style="margin-bottom: 12px; font-weight: 600; color: #374151; display: flex; align-items: flex-start;">
+        <span style="color: #10B981; font-size: 18px; margin-right: 10px;">✦</span>
+        P2: Mi profesor(a) explica los temas con claridad y con ejemplos prácticos para que los comprenda.
+    </li>
+
+    <li style="margin-bottom: 12px; font-weight: 600; color: #374151; display: flex; align-items: flex-start;">
+        <span style="color: #F59E0B; font-size: 18px; margin-right: 10px;">✦</span>
+        P3: Mi profesor(a) prepara sus clases y usa de forma organizada los recursos didácticos (PPT, pizarra, compendio u otros).
+    </li>
+
+    <li style="font-weight: 600; color: #374151; display: flex; align-items: flex-start;">
+        <span style="color: #8B5CF6; font-size: 18px; margin-right: 10px;">✦</span>
+        P4: Mi profesor(a) me acompaña cuando tengo dudas y me motiva a trabajar de forma autónoma.
+    </li>
+</ul>
+
+    <div class="tabla-detallada">
+        <div class="tabla-header">
+            <h3><i class="fa-regular fa-table-list"></i> Registros evaluados (<span id="totalRegistros">0</span>)</h3>
+            <div class="orden-group">
+                <span>Ordenar:</span>
+                <button id="ordenPromAsc" class="btn-orden"><i class="fa-solid fa-arrow-up-1-9"></i> Prom ↑</button>
+                <button id="ordenPromDesc" class="btn-orden"><i class="fa-solid fa-arrow-down-9-1"></i> Prom ↓</button>
+                <button id="ordenOriginal" class="btn-orden activo"><i class="fa-regular fa-clock"></i> Original</button>
+            </div>
+        </div>
+        <div style="overflow-x: auto;">
+            <table id="dataTable">
+                <thead id="tableHeader"></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+    <div class="footer-note" id="footerNote"><i class="fa-regular fa-chart-line"></i> Niveles: 🔴 Inicio (7.0-8.69) | 🟠 Proceso (8.70-8.99) | 🟡 Logrado (9.0-9.70) | 🟢 Destacado (9.71-10)</div>
+</div>
+
+<script>
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQCvorIBC4VOAIJ3uXmp1-HgvU_Bp4NyiBtl_p_Dq6Vm_0GdyE9tAUa-O5XRN6XNrmrcJv_TTcXa6m1/pub?output=csv";
+    
+    let masterData = [];
+    let filteredData = [];
+    let currentOrder = 'original';
+
+    const nivelColors = { inicio: '#FFB4A2', proceso: '#FFD6A5', logrado: '#FDFFB6', destacado: '#CAFFBF' };
+
+    function getNivelFromProm(prom) {
+        if (prom >= 7.0 && prom < 8.7) return 'inicio';
+        if (prom >= 8.7 && prom < 9.0) return 'proceso';
+        if (prom >= 9.0 && prom < 9.71) return 'logrado';
+        if (prom >= 9.71 && prom <= 10.0) return 'destacado';
+        return 'inicio';
+    }
+
+    function parseCSVLine(line) {
+        const result = [];
+        let inQuote = false, current = '';
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (ch === '"') inQuote = !inQuote;
+            else if (ch === ',' && !inQuote) { result.push(current.trim()); current = ''; }
+            else current += ch;
+        }
+        result.push(current.trim());
+        return result;
+    }
+
+    function cleanCell(cell) {
+        if (!cell) return '';
+        let cleaned = cell.trim();
+        if (cleaned.startsWith('"') && cleaned.endsWith('"')) cleaned = cleaned.slice(1, -1);
+        return cleaned;
+    }
+
+    function parseCSVFull(csvText) {
+        const lines = csvText.split(/\r?\n/);
+        if (lines.length < 2) return generateDemoData();
+        
+        const headers = parseCSVLine(lines[0]);
+        console.log("📋 Encabezados:", headers);
+        
+        // Asignación por índices según estructura (0: Psicólogo, 1: Plana, 2: Docente, 3: Sede, 4: Turno, 5: TipoGrado, 6: Grado, 7: Curso, 8: Aula, 9: P1, 10: P2, 11: P3, 12: P4, 13: Promedio)
+        let idxPsicologo = 0, idxPlana = 1, idxDocente = 2, idxSede = 3, idxTurno = 4;
+        let idxTipoGrado = 5, idxGrado = 6, idxCurso = 7, idxAula = 8;
+        let idxP1 = 9, idxP2 = 10, idxP3 = 11, idxP4 = 12, idxProm = 13;
+        
+        const datos = [];
+        for (let i = 1; i < lines.length; i++) {
+            if (lines[i].trim() === '') continue;
+            const cols = parseCSVLine(lines[i]);
+            
+            const promedioStr = (cols[idxProm] || '').replace(',', '.').replace(/[^0-9.]/g, '');
+            let promedio = parseFloat(promedioStr);
+            if (isNaN(promedio) || promedio < 0 || promedio > 10) continue;
+            
+            datos.push({
+                psicologo: cols[idxPsicologo] || 'Sin identificar',
+                plana: cols[idxPlana] || 'Sin plana',
+                docente: cols[idxDocente] || 'Sin docente',
+                sede: cols[idxSede] || 'Sin sede',
+                turno: cols[idxTurno] || '',
+                tipoGrado: cols[idxTipoGrado] || '',
+                grado: cols[idxGrado] || '',
+                curso: cols[idxCurso] || '',
+                aula: cols[idxAula] || '',
+                pregunta1: parseFloat(cols[idxP1]) || 0,
+                pregunta2: parseFloat(cols[idxP2]) || 0,
+                pregunta3: parseFloat(cols[idxP3]) || 0,
+                pregunta4: parseFloat(cols[idxP4]) || 0,
+                promedio: promedio,
+                nivelLogro: getNivelFromProm(promedio)
+            });
+        }
+        console.log(`✅ Cargados: ${datos.length} registros`);
+        return datos.length > 0 ? datos : generateDemoData();
+    }
+
+    function generateDemoData() {
+        const demo = [];
+        const psicologos = ['Mg. Ana López', 'Lic. Carlos Ruiz', 'Dra. Patricia Soto', 'Lic. Jorge Prado', 'Mg. Rosa Mendoza'];
+        const docentes = ['Juan Pérez', 'María García', 'Carlos López', 'Ana Torres', 'Luis Fernández', 'Sofía Martínez'];
+        const sedes = ['Sede Principal', 'Sede Los Olivos', 'Sede San Borja', 'Sede Surco'];
+        const planas = ['Psicología Educativa', 'Orientación Vocacional', 'Tutoría', 'Convivencia Escolar'];
+        const turnos = ['Mañana', 'Tarde'];
+        const grados = ['1°', '2°', '3°', '4°', '5°'];
+        
+        for (let i = 0; i < 50; i++) {
+            const p1 = Math.floor(Math.random() * 5) + 1;
+            const p2 = Math.floor(Math.random() * 5) + 1;
+            const p3 = Math.floor(Math.random() * 5) + 1;
+            const p4 = Math.floor(Math.random() * 5) + 1;
+            const promedio = (p1 + p2 + p3 + p4) / 4;
+            demo.push({
+                psicologo: psicologos[i % psicologos.length],
+                plana: planas[i % planas.length],
+                docente: docentes[i % docentes.length],
+                sede: sedes[Math.floor(Math.random() * sedes.length)],
+                turno: turnos[i % 2],
+                tipoGrado: 'Secundaria',
+                grado: grados[i % grados.length],
+                curso: 'Desarrollo Personal',
+                aula: `Aula ${(i % 12) + 1}`,
+                pregunta1: p1, pregunta2: p2, pregunta3: p3, pregunta4: p4,
+                promedio: parseFloat(promedio.toFixed(2)),
+                nivelLogro: getNivelFromProm(promedio)
+            });
+        }
+        return demo;
+    }
+
+    function getAvailableValues(field, skipField = null) {
+        let tempData = masterData;
+        const filters = {
+            psicologo: document.getElementById('filtroPsicologo')?.value || '__ALL__',
+            plana: document.getElementById('filtroPlana')?.value || '__ALL__',
+            docente: document.getElementById('filtroDocente')?.value || '__ALL__',
+            sede: document.getElementById('filtroSede')?.value || '__ALL__',
+            turno: document.getElementById('filtroTurno')?.value || '__ALL__',
+            tipoGrado: document.getElementById('filtroTipoGrado')?.value || '__ALL__',
+            grado: document.getElementById('filtroGrado')?.value || '__ALL__',
+            nivelLogro: document.getElementById('filtroNivelLogro')?.value || '__ALL__',
+            pregunta1: document.getElementById('filtroPregunta1')?.value || '__ALL__',
+            pregunta2: document.getElementById('filtroPregunta2')?.value || '__ALL__',
+            pregunta3: document.getElementById('filtroPregunta3')?.value || '__ALL__',
+            pregunta4: document.getElementById('filtroPregunta4')?.value || '__ALL__'
+        };
+        for (const [key, val] of Object.entries(filters)) {
+            if (skipField === key) continue;
+            if (val && val !== '__ALL__') {
+                if (key.startsWith('pregunta')) tempData = tempData.filter(row => row[key] === parseFloat(val));
+                else tempData = tempData.filter(row => row[key] === val);
+            }
+        }
+        return [...new Set(tempData.map(r => r[field]).filter(v => v && v !== '' && v !== 'Sin identificar' && v !== 'Sin plana' && v !== 'Sin docente'))].sort();
+    }
+
+    function updateCascadingFilters() {
+        const selects = ['filtroPsicologo', 'filtroPlana', 'filtroDocente', 'filtroSede', 'filtroTurno', 'filtroTipoGrado', 'filtroGrado'];
+        const fields = ['psicologo', 'plana', 'docente', 'sede', 'turno', 'tipoGrado', 'grado'];
+        
+        for (let i = 0; i < selects.length; i++) {
+            const current = document.getElementById(selects[i]).value;
+            const values = getAvailableValues(fields[i], fields[i]);
+            const select = document.getElementById(selects[i]);
+            select.innerHTML = `<option value="__ALL__">Todos${fields[i] === 'psicologo' ? ' las áreas' : fields[i] === 'plana' ? ' las planas' : ''}</option>` + values.map(v => `<option value="${escapeHtml(v)}">${v}</option>`).join('');
+            if (values.includes(current)) select.value = current;
+            else select.value = '__ALL__';
+        }
+        
+        const niveles = getAvailableValues('nivelLogro', 'nivelLogro');
+        const nivelSel = document.getElementById('filtroNivelLogro');
+        const currentNivel = nivelSel.value;
+        const opts = ['__ALL__', 'inicio', 'proceso', 'logrado', 'destacado'];
+        const texts = ['Todos', 'En Inicio (7.0-8.69)', 'En Proceso (8.70-8.99)', 'Logrado (9.0-9.70)', 'Destacado (9.71-10)'];
+        nivelSel.innerHTML = opts.map((o, i) => `<option value="${o}" ${!niveles.includes(o) && o !== '__ALL__' ? 'disabled style="opacity:0.5"' : ''}>${texts[i]}</option>`).join('');
+        if (niveles.includes(currentNivel) || currentNivel === '__ALL__') nivelSel.value = currentNivel;
+        else nivelSel.value = '__ALL__';
+    }
+
+    function applyFiltersAndRender() {
+        const psicologo = document.getElementById('filtroPsicologo')?.value || '__ALL__';
+        const plana = document.getElementById('filtroPlana')?.value || '__ALL__';
+        const docente = document.getElementById('filtroDocente')?.value || '__ALL__';
+        const sede = document.getElementById('filtroSede')?.value || '__ALL__';
+        const turno = document.getElementById('filtroTurno')?.value || '__ALL__';
+        const tipoGrado = document.getElementById('filtroTipoGrado')?.value || '__ALL__';
+        const grado = document.getElementById('filtroGrado')?.value || '__ALL__';
+        const nivelLogro = document.getElementById('filtroNivelLogro')?.value || '__ALL__';
+        const p1 = document.getElementById('filtroPregunta1')?.value || '__ALL__';
+        const p2 = document.getElementById('filtroPregunta2')?.value || '__ALL__';
+        const p3 = document.getElementById('filtroPregunta3')?.value || '__ALL__';
+        const p4 = document.getElementById('filtroPregunta4')?.value || '__ALL__';
+        
+        filteredData = masterData.filter(r => {
+            if (psicologo !== '__ALL__' && r.psicologo !== psicologo) return false;
+            if (plana !== '__ALL__' && r.plana !== plana) return false;
+            if (docente !== '__ALL__' && r.docente !== docente) return false;
+            if (sede !== '__ALL__' && r.sede !== sede) return false;
+            if (turno !== '__ALL__' && r.turno !== turno) return false;
+            if (tipoGrado !== '__ALL__' && r.tipoGrado !== tipoGrado) return false;
+            if (grado !== '__ALL__' && r.grado !== grado) return false;
+            if (nivelLogro !== '__ALL__' && r.nivelLogro !== nivelLogro) return false;
+            if (p1 !== '__ALL__' && r.pregunta1 !== parseFloat(p1)) return false;
+            if (p2 !== '__ALL__' && r.pregunta2 !== parseFloat(p2)) return false;
+            if (p3 !== '__ALL__' && r.pregunta3 !== parseFloat(p3)) return false;
+            if (p4 !== '__ALL__' && r.pregunta4 !== parseFloat(p4)) return false;
+            return true;
+        });
+        
+        updateCascadingFilters();
+        applyOrdering();
+    }
+    
+    function applyOrdering() {
+        if (currentOrder === 'asc') filteredData.sort((a,b) => a.promedio - b.promedio);
+        else if (currentOrder === 'desc') filteredData.sort((a,b) => b.promedio - a.promedio);
+        else filteredData.sort((a,b) => masterData.indexOf(a) - masterData.indexOf(b));
+        renderTable();
+        updateKPIs();
+        renderCharts();
+    }
+
+    function setOrder(order) {
+        currentOrder = order;
+        document.querySelectorAll('.btn-orden').forEach(btn => btn.classList.remove('activo'));
+        if (order === 'asc') document.getElementById('ordenPromAsc').classList.add('activo');
+        else if (order === 'desc') document.getElementById('ordenPromDesc').classList.add('activo');
+        else document.getElementById('ordenOriginal').classList.add('activo');
+        applyFiltersAndRender();
+    }
+
+    function renderTable() {
+        const thead = document.getElementById('tableHeader');
+        const tbody = document.getElementById('tableBody');
+        const cols = ['Área', 'Plana', 'Docente', 'Sede', 'Turno', 'Tipo Grado', 'Grado', 'Curso', 'Aula', 'P1', 'P2', 'P3', 'P4', 'Promedio', 'Nivel'];
+        thead.innerHTML = '<tr>' + cols.map(c => `<th>${c}</th>`).join('') + '</tr>';
+        
+        document.getElementById('totalRegistros').innerText = filteredData.length;
+        tbody.innerHTML = '';
+        if (filteredData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="15" style="text-align:center; padding:40px;">⚠️ No hay registros</td><\/tr>';
+            return;
+        }
+        filteredData.forEach(r => {
+            const nivelText = { inicio:'En Inicio', proceso:'En Proceso', logrado:'Logrado', destacado:'Destacado' }[r.nivelLogro];
+            tbody.insertAdjacentHTML('beforeend', `<tr>
+                <td>${escapeHtml(r.psicologo)}<\/td><td>${escapeHtml(r.plana)}<\/td><td>${escapeHtml(r.docente)}<\/td>
+                <td>${escapeHtml(r.sede)}<\/td><td>${escapeHtml(r.turno)}<\/td><td>${escapeHtml(r.tipoGrado)}<\/td>
+                <td>${escapeHtml(r.grado)}<\/td><td>${escapeHtml(r.curso)}<\/td><td>${escapeHtml(r.aula)}<\/td>
+                <td><span class="puntaje-badge">${r.pregunta1}<\/span><\/td><td><span class="puntaje-badge">${r.pregunta2}<\/span><\/td>
+                <td><span class="puntaje-badge">${r.pregunta3}<\/span><\/td><td><span class="puntaje-badge">${r.pregunta4}<\/span><\/td>
+                <td><strong>${r.promedio.toFixed(2)}<\/strong><\/td>
+                <td><span class="badge-nivel nivel-${r.nivelLogro}">${nivelText}<\/span><\/td>
+            </tr>`);
+        });
+    }
+
+    function updateKPIs() {
+        const total = filteredData.length;
+        const psicologos = new Set(filteredData.map(d => d.psicologo)).size;
+        const promedio = filteredData.length ? (filteredData.reduce((a,b)=>a+b.promedio,0)/filteredData.length).toFixed(2) : "0.00";
+        document.getElementById('kpiResumen').innerHTML = `
+            <div class="kpi-mini-item"><span>📋 Evaluaciones</span><span>${total}</span></div>
+            <div class="kpi-mini-item"><span>⭐ Promedio global</span><span>${promedio}</span></div>
+        `;
+    }
+
+    let chart1, chart2, chart3;
+    function renderCharts() {
+        const psiMap = new Map();
+        filteredData.forEach(r => { if(!psiMap.has(r.psicologo)) psiMap.set(r.psicologo, []); psiMap.get(r.psicologo).push(r.promedio); });
+        const psiOrd = Array.from(psiMap.keys()).sort();
+        const proms = psiOrd.map(p => psiMap.get(p).reduce((a,b)=>a+b,0)/psiMap.get(p).length);
+        
+        const ctx1 = document.getElementById('promedioPsicologoChart')?.getContext('2d');
+        if (ctx1) { if (chart1) chart1.destroy(); chart1 = new Chart(ctx1, { type: 'bar', data: { labels: psiOrd.map(p=>p.length>18?p.slice(0,15)+'…':p), datasets: [{ label: 'Promedio', data: proms, backgroundColor: '#2c9f8c', borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: true, scales: { y: { min: 6, max: 10 } } } }); }
+        
+        const cInicio = filteredData.filter(r=>r.nivelLogro==='inicio').length;
+        const cProceso = filteredData.filter(r=>r.nivelLogro==='proceso').length;
+        const cLogrado = filteredData.filter(r=>r.nivelLogro==='logrado').length;
+        const cDestacado = filteredData.filter(r=>r.nivelLogro==='destacado').length;
+        const ctx2 = document.getElementById('nivelGlobalChart')?.getContext('2d');
+        if (ctx2) { if (chart2) chart2.destroy(); chart2 = new Chart(ctx2, { type: 'doughnut', data: { labels: ['Inicio','Proceso','Logrado','Destacado'], datasets: [{ data: [cInicio,cProceso,cLogrado,cDestacado], backgroundColor: [nivelColors.inicio, nivelColors.proceso, nivelColors.logrado, nivelColors.destacado], borderWidth: 2 }] }, options: { cutout: '60%', plugins: { legend: { position: 'bottom' } } } }); }
+        
+        const scatter = filteredData.map(r => ({ x: r.promedio, y: r.promedio, nivel: r.nivelLogro }));
+        const ctx3 = document.getElementById('scatterChart')?.getContext('2d');
+        if (ctx3) { if (chart3) chart3.destroy(); chart3 = new Chart(ctx3, { type: 'scatter', data: { datasets: [{ label: 'Registros', data: scatter, backgroundColor: scatter.map(d=>nivelColors[d.nivel]), pointRadius: 6, pointHoverRadius: 10 }] }, options: { responsive: true, maintainAspectRatio: true, scales: { x: { min: 6, max: 10, title: { display: true, text: 'Promedio' } }, y: { display: false } }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `Promedio: ${ctx.raw.x.toFixed(2)}` } } } } }); }
+    }
+
+    function resetAll() {
+        ['filtroPsicologo', 'filtroPlana', 'filtroDocente', 'filtroSede', 'filtroTurno', 'filtroTipoGrado', 'filtroGrado', 'filtroNivelLogro', 'filtroPregunta1', 'filtroPregunta2', 'filtroPregunta3', 'filtroPregunta4'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = '__ALL__'; });
+        currentOrder = 'original';
+        document.querySelectorAll('.btn-orden').forEach(btn => btn.classList.remove('activo'));
+        document.getElementById('ordenOriginal')?.classList.add('activo');
+        applyFiltersAndRender();
+    }
+
+    function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => m==='&'?'&amp;': m==='<'?'&lt;':'&gt;'); }
+
+    async function loadData(showMsg = false) {
+        const loader = document.getElementById('loadingIndicator');
+        loader.classList.add('show');
+        try {
+            const resp = await fetch(`${CSV_URL}&_=${Date.now()}`, { cache: 'no-store' });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const csv = await resp.text();
+            let parsed = parseCSVFull(csv);
+            if (parsed.length === 0) parsed = generateDemoData();
+            masterData = parsed;
+            updateCascadingFilters();
+            applyFiltersAndRender();
+            document.getElementById('footerNote').innerHTML = `<i class="fa-regular fa-clock"></i> Actualizado: ${new Date().toLocaleString()} · ${masterData.length} registros`;
+            if (showMsg) alert('✅ Datos actualizados correctamente');
+        } catch(e) {
+            console.error(e);
+            masterData = generateDemoData();
+            updateCascadingFilters();
+            applyFiltersAndRender();
+            alert('⚠️ Usando datos de demostración. Verifica que la hoja esté publicada como CSV.');
+        } finally { loader.classList.remove('show'); }
+    }
+
+    const ids = ['filtroPsicologo', 'filtroPlana', 'filtroDocente', 'filtroSede', 'filtroTurno', 'filtroTipoGrado', 'filtroGrado', 'filtroNivelLogro', 'filtroPregunta1', 'filtroPregunta2', 'filtroPregunta3', 'filtroPregunta4'];
+    ids.forEach(id => document.getElementById(id)?.addEventListener('change', applyFiltersAndRender));
+    document.getElementById('resetFiltrosBtn')?.addEventListener('click', resetAll);
+    document.getElementById('ordenPromAsc')?.addEventListener('click', () => setOrder('asc'));
+    document.getElementById('ordenPromDesc')?.addEventListener('click', () => setOrder('desc'));
+    document.getElementById('ordenOriginal')?.addEventListener('click', () => setOrder('original'));
+    document.getElementById('btnActualizar')?.addEventListener('click', () => loadData(true));
+    
+    loadData(false);
+</script>
+    <footer style="text-align: center; padding: 20px 0 10px 0; margin-top: 30px; border-top: 1px solid #cfe1ef; color: #4b748b; font-size: 0.8rem;">
+        <i class="fa-regular fa-copyright"></i> 2026 Created by Carlos Alfredo Fajardo Lukis
+    </footer>
+</body>
+</html>
