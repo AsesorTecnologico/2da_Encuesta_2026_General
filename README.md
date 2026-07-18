@@ -1,0 +1,1 @@
+# 2da_Encuesta_2026_General
